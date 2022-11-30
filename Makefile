@@ -3,7 +3,7 @@ help:
 
 CHASTE_IMAGE?=fieldofnodes/chaste-docker-arm-m1
 BASE?=focal
-TAG?=2021.1
+TAG?=2022.12
 GIT_TAG?="${TAG}"
 # GIT_TAG?=$(git describe --abbrev=0)
 CHASTE_DIR?="/home/chaste"
@@ -42,6 +42,9 @@ TARGET?=
 # Do not declare volume for base (or stub - deprecated) so that subsequent layers may modify the contents of /home/chaste
 # NOTE: When a container is started which creates a new volume, the contents of the mount point is copied to the volume
 base stub: TARGET = --target base
+base stub: 
+	docker buildx create --platform linux/arm64,linux/arm/v8
+	nostalgic_brown
 base stub:
 	docker buildx build --platform linux/amd64 \
 				-t chaste/$@:$(BASE) \
@@ -56,7 +59,11 @@ base stub:
 
 EXTRA_ARGS?=
 build:
-	docker buildx build --platform linux/amd64 \
+	docker buildx create --platform linux/arm64,linux/arm/v8
+	nostalgic_brown
+build:
+	docker buildx build --use nostalgic_brown \
+
 				 -t $(CHASTE_IMAGE):$(TAG) \
 				 -t $(CHASTE_IMAGE):$(BASE)-$(TAG) \
 				 --build-arg BASE=$(BASE) \
@@ -75,8 +82,11 @@ fresh latest: build
 #	docker build -t $(CHASTE_IMAGE):$@ \
 
 master develop: CMAKE_BUILD_TYPE="Debug" Chaste_ERROR_ON_WARNING="ON" Chaste_UPDATE_PROVENANCE="OFF"
+master develop: 
+	docker buildx create --platform linux/arm64,linux/arm/v8
+	nostalgic_brown
 master develop:
-	docker buildx build --platform linux/amd64 \
+	docker buildx build --use nostalgic_brown \
 	  			 -t chaste/$@ \
 				 --build-arg BASE=$(BASE) \
 				 --build-arg CHASTE_DIR=$(CHASTE_DIR) \
@@ -114,7 +124,7 @@ test: build
 	docker run -it --init --rm --env CMAKE_BUILD_TYPE=Debug \
 				$(CHASTE_IMAGE):$(TAG) test.sh $(TEST_SUITE)
 
-release: CHASTE_IMAGE=chaste/release
+release: CHASTE_IMAGE=fieldofnodes/chaste-docker-arm-m1
 release: build test push
 
 build-info: TEST_SUITE=TestChasteBuildInfo
