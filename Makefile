@@ -1,7 +1,7 @@
 help:
 	@cat Makefile
 
-CHASTE_IMAGE?=chaste/release
+CHASTE_IMAGE?=fieldofnodes/chaste-docker-arm-m1
 BASE?=focal
 TAG?=2021.1
 GIT_TAG?="${TAG}"
@@ -43,16 +43,21 @@ TARGET?=
 # NOTE: When a container is started which creates a new volume, the contents of the mount point is copied to the volume
 base stub: TARGET = --target base
 base stub:
-	docker build -t chaste/$@:$(BASE) \
+	docker buildx build --platform linux/amd64 \
+				-t chaste/$@:$(BASE) \
 				--build-arg BASE=$(BASE) \
 				--build-arg CHASTE_DIR=$(CHASTE_DIR) \
 				$(TARGET) \
 				-f $(DOCKER_FILE) .
 	docker push chaste/$@:$(BASE)
 
+
+	 
+
 EXTRA_ARGS?=
 build:
-	docker build -t $(CHASTE_IMAGE):$(TAG) \
+	docker buildx build --platform linux/amd64 \
+				 -t $(CHASTE_IMAGE):$(TAG) \
 				 -t $(CHASTE_IMAGE):$(BASE)-$(TAG) \
 				 --build-arg BASE=$(BASE) \
 				 --build-arg CHASTE_DIR=$(CHASTE_DIR) \
@@ -71,7 +76,8 @@ fresh latest: build
 
 master develop: CMAKE_BUILD_TYPE="Debug" Chaste_ERROR_ON_WARNING="ON" Chaste_UPDATE_PROVENANCE="OFF"
 master develop:
-	docker build -t chaste/$@ \
+	docker buildx build --platform linux/amd64 \
+	  			 -t chaste/$@ \
 				 --build-arg BASE=$(BASE) \
 				 --build-arg CHASTE_DIR=$(CHASTE_DIR) \
 				 --build-arg TAG=$@ \
